@@ -1,7 +1,7 @@
-# Sport Event Management System
+# EventPro Sports Scheduler
 
 🌟 **Overview**  
-The Sport Event Management System is an advanced C++ application crafted to manage various aspects of sports events efficiently. From creating events and managing participants to handling ticketing, scheduling, and results, this system is built on solid Object-Oriented Programming (OOP) principles. It incorporates sophisticated design patterns like factory and singleton patterns to ensure scalability and robustness.
+The EventPro Sports Scheduler is an advanced C++ application crafted to manage various aspects of sports events efficiently. From creating events and managing participants to handling ticketing, scheduling, and results, this system is built on solid Object-Oriented Programming (OOP) principles. It incorporates sophisticated design patterns like factory and singleton patterns to ensure scalability and robustness.
 
 ---
 
