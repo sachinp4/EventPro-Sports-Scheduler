@@ -10,7 +10,6 @@ const int MAX_EVENTS = 10;
 const int MAX_PARTICIPANTS = 20;
 const int MAX_TICKETS = 20;
 
-
 void displayMenu() {
     cout << "1. Create Event\n";
     cout << "2. Add Participant to Event\n";
@@ -140,7 +139,8 @@ public:
     int seat_no;
     float price;
 
-    Ticket(int id, string holder, string event, int seat, float p) : ticket_id(id), holder_name(holder), event_name(event), seat_no(seat), price(p) {}
+    Ticket(int id, string holder, string event, int seat, float p) 
+        : ticket_id(id), holder_name(holder), event_name(event), seat_no(seat), price(p) {}
 
     void issueTicket() const {
         cout << "Ticket issued to " << holder_name << " for event " << event_name << " at seat " << seat_no << "." << endl;
@@ -157,7 +157,8 @@ public:
     string event;
     string start_date, end_date;
 
-    Schedule(int id, string e, string start, string end) : schedule_id(id), event(e), start_date(start), end_date(end) {}
+    Schedule(int id, string e, string start, string end) 
+        : schedule_id(id), event(e), start_date(start), end_date(end) {}
 
     void createSchedule() const {
         cout << "Schedule created for event " << event << " from " << start_date << " to " << end_date << "." << endl;
@@ -215,23 +216,11 @@ public:
 
 ScheduleManager* ScheduleManager::instance = nullptr;
 
-// Factory Interfaces
 class PersonFactory {
 public:
     virtual Person* createPerson(const string& name, int age, const string& country, int id) = 0;
 };
 
-class TicketFactory {
-public:
-    virtual Ticket* createTicket(int ticket_id, const string& holder_name, const string& event_name, int seat_no, float price) = 0;
-};
-
-class ScheduleFactory {
-public:
-    virtual Schedule* createSchedule(int id, const string& event, const string& start, const string& end) = 0;
-};
-
-// Concrete Factories
 class AthleteFactory : public PersonFactory {
 public:
     Person* createPerson(const string& name, int age, const string& country, int id) override {
@@ -243,20 +232,6 @@ class OfficialFactory : public PersonFactory {
 public:
     Person* createPerson(const string& name, int age, const string& country, int id) override {
         return new Official(name, age, country, id);
-    }
-};
-
-class StandardTicketFactory : public TicketFactory {
-public:
-    Ticket* createTicket(int ticket_id, const string& holder_name, const string& event_name, int seat_no, float price) override {
-        return new Ticket(ticket_id, holder_name, event_name, seat_no, price);
-    }
-};
-
-class StandardScheduleFactory : public ScheduleFactory {
-public:
-    Schedule* createSchedule(int id, const string& event, const string& start, const string& end) override {
-        return new Schedule(id, event, start, end);
     }
 };
 
@@ -319,23 +294,12 @@ public:
             cout << "No result recorded." << endl;
         }
     }
-
-    ~Event() {
-        for (Person* p : participants) {
-            delete p;
-        }
-        for (Ticket* t : tickets) {
-            delete t;
-        }
-        delete result;
-    }
 };
 
 int main() {
-    vector<Event> events;
-    AthleteFactory athleteFactory;
-    OfficialFactory officialFactory;
-    StandardTicketFactory ticketFactory;
+    vector<Event*> events;
+    PersonFactory* athleteFactory = new AthleteFactory();
+    PersonFactory* officialFactory = new OfficialFactory();
 
     while (true) {
         displayMenu();
@@ -345,95 +309,112 @@ int main() {
         if (choice == 1) {
             int id;
             string name, date;
-            cout << "Enter event ID, name, and date: ";
-            cin >> id >> name >> date;
-            try {
-                events.emplace_back(id, name, date);
-                cout << "Event created successfully." << endl;
-            } catch (const exception& e) {
-                cout << "Error: " << e.what() << endl;
-            }
+            cout << "Enter event ID: ";
+            cin >> id;
+            cout << "Enter event name: ";
+            cin.ignore();
+            getline(cin, name);
+            cout << "Enter event date: ";
+            cin >> date;
+
+            Event* event = new Event(id, name, date);
+            events.push_back(event);
         } else if (choice == 2) {
-            int event_id, person_type, age, id;
+            int event_id, type, person_id, age;
             string name, country;
             cout << "Enter event ID: ";
             cin >> event_id;
-            cout << "Enter person type (1 for Athlete, 2 for Official): ";
-            cin >> person_type;
-            cout << "Enter name, age, country, and ID: ";
-            cin >> name >> age >> country >> id;
-            try {
-                if (person_type == 1) {
-                    events[event_id - 1].addParticipant(athleteFactory.createPerson(name, age, country, id));
-                } else {
-                    events[event_id - 1].addParticipant(officialFactory.createPerson(name, age, country, id));
-                }
-                cout << "Participant added successfully." << endl;
-            } catch (const overflow_error& e) {
-                cout << "Error: " << e.what() << endl;
-            } catch (const exception& e) {
-                cout << "An error occurred: " << e.what() << endl;
+            cout << "Enter 1 for Athlete, 2 for Official: ";
+            cin >> type;
+            cout << "Enter person ID: ";
+            cin >> person_id;
+            cout << "Enter name: ";
+            cin.ignore();
+            getline(cin, name);
+            cout << "Enter age: ";
+            cin >> age;
+            cout << "Enter country: ";
+            cin >> country;
+
+            Person* person = nullptr;
+            if (type == 1) {
+                person = athleteFactory->createPerson(name, age, country, person_id);
+            } else if (type == 2) {
+                person = officialFactory->createPerson(name, age, country, person_id);
             }
+
+            events[event_id - 1]->addParticipant(person);
         } else if (choice == 3) {
             int event_id, ticket_id, seat_no;
-            float price;
             string holder_name, event_name;
+            float price;
             cout << "Enter event ID: ";
             cin >> event_id;
-            cout << "Enter ticket ID, holder name, seat number, and price: ";
-            cin >> ticket_id >> holder_name >> seat_no >> price;
-            try {
-                events[event_id - 1].addTicket(ticketFactory.createTicket(ticket_id, holder_name, events[event_id - 1].event_name, seat_no, price));
-                cout << "Ticket added successfully." << endl;
-            } catch (const overflow_error& e) {
-                cout << "Error: " << e.what() << endl;
-            } catch (const exception& e) {
-                cout << "An error occurred: " << e.what() << endl;
-            }
+            cout << "Enter ticket ID: ";
+            cin >> ticket_id;
+            cout << "Enter holder name: ";
+            cin.ignore();
+            getline(cin, holder_name);
+            cout << "Enter event name: ";
+            getline(cin, event_name);
+            cout << "Enter seat number: ";
+            cin >> seat_no;
+            cout << "Enter price: ";
+            cin >> price;
+
+            Ticket* ticket = new Ticket(ticket_id, holder_name, event_name, seat_no, price);
+            events[event_id - 1]->addTicket(ticket);
         } else if (choice == 4) {
             int event_id, schedule_id;
             string start_date, end_date;
-            cout << "Enter event ID and schedule ID: ";
-            cin >> event_id >> schedule_id;
-            cout << "Enter start and end dates: ";
-            cin >> start_date >> end_date;
-            try {
-                ScheduleManager::getInstance()->createSchedule(schedule_id, events[event_id - 1].event_name, start_date, end_date);
-                events[event_id - 1].setSchedule(schedule_id);
-                cout << "Schedule set successfully." << endl;
-            } catch (const runtime_error& e) {
-                cout << "Error: " << e.what() << endl;
-            } catch (const exception& e) {
-                cout << "An error occurred: " << e.what() << endl;
-            }
-        } else if (choice == 5) {
-            int event_id, result_id, pos;
-            float time_score, points_score;
-            string event, country;
             cout << "Enter event ID: ";
             cin >> event_id;
-            cout << "Enter result ID, position, time score, points score, and country: ";
-            cin >> result_id >> pos >> time_score >> points_score >> country;
-            try {
-                events[event_id - 1].setResult(new MedalTally(result_id, events[event_id - 1].event_name, pos, time_score, points_score, country));
-                cout << "Result set successfully." << endl;
-            } catch (const exception& e) {
-                cout << "An error occurred: " << e.what() << endl;
-            }
+            cout << "Enter schedule ID: ";
+            cin >> schedule_id;
+            cout << "Enter start date: ";
+            cin >> start_date;
+            cout << "Enter end date: ";
+            cin >> end_date;
+
+            ScheduleManager::getInstance()->createSchedule(schedule_id, events[event_id - 1]->event_name, start_date, end_date);
+            events[event_id - 1]->setSchedule(schedule_id);
+        } else if (choice == 5) {
+            int event_id, result_id, position;
+            float time_score, points_score;
+            string country;
+            cout << "Enter event ID: ";
+            cin >> event_id;
+            cout << "Enter result ID: ";
+            cin >> result_id;
+            cout << "Enter position (1 for Gold, 2 for Silver, 3 for Bronze): ";
+            cin >> position;
+            cout << "Enter time score: ";
+            cin >> time_score;
+            cout << "Enter points score: ";
+            cin >> points_score;
+            cout << "Enter country: ";
+            cin >> country;
+
+            MedalTally* result = new MedalTally(result_id, events[event_id - 1]->event_name, position, time_score, points_score, country);
+            events[event_id - 1]->setResult(result);
         } else if (choice == 6) {
             int event_id;
             cout << "Enter event ID: ";
             cin >> event_id;
-            try {
-                events[event_id - 1].getDetails();
-            } catch (const exception& e) {
-                cout << "Error: " << e.what() << endl;
-            }
+
+            events[event_id - 1]->getDetails();
         } else if (choice == 7) {
             break;
         } else {
-            cout << "Invalid choice. Please try again." << endl;
+            cout << "Invalid choice! Please try again." << endl;
         }
+    }
+
+    delete athleteFactory;
+    delete officialFactory;
+
+    for (Event* e : events) {
+        delete e;
     }
 
     return 0;
