@@ -25,5 +25,5 @@ The EventPro Sports Scheduler is an advanced C++ application crafted to manage v
 - **Schedule**: Defines and organizes event timings and sequences.
 - **ScheduleManager**: A Singleton class that oversees event schedules.
 - **Event**: Manages the event's participants, tickets, and results.
-- **PersonFactory, TicketFactory, ScheduleFactory**: Abstract factory interfaces for creating Person, Ticket, and Schedule objects.
-- **AthleteFactory, OfficialFactory, StandardTicketFactory, StandardScheduleFactory**: Concrete factories for creating specific object types.
+- **PersonFactory**: Abstract factory interfaces for creating Person objects.
+- **AthleteFactory, OfficialFactory**: Concrete factories for creating specific object types.
